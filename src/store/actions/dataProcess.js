@@ -1,33 +1,23 @@
-import { createReducer } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 
 /* Reducer */
 
-const initialState = {
-    stories: [
-        {
-            id: 1,
-            name: "TypeScript — What is it all about?",
-            claps: 699,
-            route:
-                "https://levelup.gitconnected.com/typescript-what-is-it-all-about-4c9dea82cd32",
-        },
-        {
-            id: 2,
-            name: "JavaScript — A brief introduction",
-            claps: 164,
-            route:
-                "https://medium.com/@abongsjoel/javascript-a-brief-introduction-e995ae5a2494",
-        },
-        {
-            id: 3,
-            name: "Redux — A birds-eye view",
-            claps: 699,
-            route:
-                "https://levelup.gitconnected.com/redux-a-birds-eye-view-58925fc5ee8",
-        },
-    ],
-};
+const initialState= {files:[]};
 
-const reducer = createReducer(initialState, {});
+const filesList = createSlice({
+    name: "fileList",
+    initialState,
+    reducers: {
+        setFilesList: (state,action) =>{
+            state.files[action.payload.key] = action.payload.value;
 
-export default reducer;
+        },
+        setFilesLists: (state,action) => {
+            debugger
+            state.files = [...action.payload.files];
+        }
+    }
+});
+export const { setFilesList, setFilesLists } = filesList.actions;
+export const selectDatas = (state) => state.datas.files;
+export default filesList.reducer;

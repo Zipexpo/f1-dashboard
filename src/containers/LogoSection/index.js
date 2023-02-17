@@ -11,7 +11,7 @@ import Logo from '../../components/Logo';
 
 const LogoSection = () => (
     <ButtonBase disableRipple component={Link} to={config.defaultPath}>
-        <Logo /> F1-count
+        <Logo /> Profile vs App
     </ButtonBase>
 );
 

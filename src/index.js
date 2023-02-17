@@ -6,7 +6,7 @@ import App from "./App";
 import store from "./store";
 
 import reportWebVitals from "./reportWebVitals";
-import {BrowserRouter} from "react-router-dom";
+import {HashRouter as BrowserRouter} from "react-router-dom";
 
 // style + assets
 import './assets/scss/style.scss';

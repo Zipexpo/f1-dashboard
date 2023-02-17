@@ -1,0 +1,167 @@
+import {useSelector} from "react-redux";
+import {
+    selectDatas
+} from "../../store/actions/dataProcess";
+import {gridSpacing} from "../../store/constant";
+import {Card, Grid, Typography, Box, Autocomplete, TextField, Stack, MenuItem} from "@mui/material";
+import {lazy, useEffect, useState} from "react";
+import {groups,extent as d3extent,min as d3min, max as d3max} from "d3";
+import Loadable from '../../components/Loadable';
+
+
+// dashboard routing
+// const LineChart = Loadable(lazy(() => import('../../components/viz/lineChart')));
+// const RibbonChart = Loadable(lazy(() => import('../../components/viz/Ribbon')));
+import LineChart from "../../components/viz/lineChart";
+// import LineChart from "../../components/viz/lineChart/subplots";
+import RibbonChart from "../../components/viz/Ribbon";
+
+// fix this later
+const Viz = ()=>{
+    const datas = useSelector(selectDatas);
+    const [nestData,stNestData] = useState([]);
+    const [dimension,setDimension] = useState([]);
+    const [dimensionDetail,setDimensionDetail] = useState({});
+    const [plotType,setPlotType] = useState('lines');
+    const [layout,setLayout] = useState([]);
+    const [axis,setAxis] = useState([{label:'x',key:"index"},
+        {label:'y',key:"voltage"},
+        {label:'z',key:null,is3D:true},
+        {label:'color',key:null}
+    ]);
+        // {key:"gpu_usage"}]);
+    // need to move this in the future
+    useEffect(()=>{
+        const newProfile = groups(datas,d=>d.Profile);
+        const positionK = {};
+        const flatdata = [];
+        const newdata = newProfile.map(([p,pd])=>{
+            const app = Object.keys(positionK).map(k=>[k,[]]);
+            pd.forEach(d=>{
+                if (positionK[d.AppName]===undefined){
+                    positionK[d.AppName] = app.length;
+                    app[positionK[d.AppName]]=[d.AppName,[]];
+                }
+                app[positionK[d.AppName]][1].push(d);
+                flatdata.push(d.data);
+            })
+            return [p,app]
+        })
+        stNestData(newdata);
+        const dimensionDetail = {};
+        if (datas[0]&&datas[0].data&&datas[0].data[0]) {
+            let dim = Object.keys(datas[0].data[0]);
+            dim.forEach(k=>{
+                dimensionDetail[k] = [+Infinity,-Infinity];
+                const ex = flatdata.map(d=>d3extent(d,d=>+d[k]));
+                dimensionDetail[k] = [d3min(ex,d=>d[0]),d3max(ex,d=>d[1])];
+            })
+            setDimension(dim)
+        }else
+            setDimension([]);
+        setDimensionDetail(dimensionDetail);
+    },[datas]);
+    const onChangeAxis = (key,value)=>{
+        axis[key].key = value;
+        setAxis([...axis])
+    }
+    const is3D = ((plotType==='markers')||(plotType==='lines'));
+    const renderAxis = ()=>{
+        switch (plotType){
+            case 'markers':
+            case 'lines':
+                return axis.map((a,i)=><Autocomplete value={a.key} key={a.label}
+                                                     size={"small"}
+                                                     sx={{minWidth:200,display:a.is3D ?'none':undefined}}
+                                                     options={dimension}
+                                                     onChange={(event, newValue) => onChangeAxis(i, newValue)}
+                                                     renderInput={(params) => <TextField {...params} label={a.label}/>}/>)
+            default:
+                return axis.map((a,i)=><Autocomplete value={a.key} key={a.label}
+                                                     size={"small"}
+                                                     sx={{minWidth:200}}
+                                                     options={dimension}
+                                                     onChange={(event, newValue) => onChangeAxis(i, newValue)}
+                                                     renderInput={(params) => <TextField {...params} label={a.label}/>}/>)
+        }
+    }
+    return(
+        <Grid container spacing={gridSpacing}>
+            <Grid item xs={12} >
+                <Stack spacing={2} direction={"row"}>
+                    <TextField
+                        select
+                        label="Plot type"
+                        size="small"
+                        sx={{minWidth:200}}
+                        value={plotType}
+                        onChange={(event)=>setPlotType(event.target.value)}
+                    >
+                        <MenuItem value={'markers'}>
+                            Scatter plot
+                        </MenuItem>
+                        <MenuItem value={'lines'}>
+                            Line chart
+                        </MenuItem>
+                        <MenuItem value={'Ribbon'}>
+                            3D scatter plot
+                        </MenuItem>
+                        <MenuItem value={'Splom'}>
+                            Splom
+                        </MenuItem>
+                        <MenuItem value={'pca'}>
+                            PCA
+                        </MenuItem>
+                    </TextField>
+                {renderAxis()}
+                </Stack>
+            </Grid>
+            {
+                nestData.map(([profile,pData])=>(<Grid item key={profile} xs={is3D?12:6} >
+                    <Card>
+                        <Box sx={{ p: 2, pl: 2 }}>
+                            <Typography variant={'h3'}>{profile}</Typography>
+                            {is3D&&<Grid container>
+                                {pData.map(([app, appData],i) => <Grid key={`${profile} ${app}`} item xs={4}
+                                                                     sx={{height: 200, mb: 3}}>
+                                    <Typography variant={'h5'} textAlign={'center'}>{app}</Typography>
+                                    {appData[0] &&
+                                        <LineChart data={appData[0]?.data} xKey={axis[0].key} yKey={axis[1].key}
+                                                   cKey={axis[3].key}
+                                                   colorDomain={dimensionDetail[axis[3].key]}
+                                                   getArr={([k,t])=>t[0]?t[0].data:[]}
+                                                   getName={([k,t])=>k}
+                                                   mode={plotType}
+                                                   showscale={i===2}
+                                        />}
+                                </Grid>)}
+                            </Grid>}
+                            {/*{is3D&&<LineChart data={pData}*/}
+                            {/*                  xKey={axis[0].key}*/}
+                            {/*                  yKey={axis[1].key}*/}
+                            {/*                  cKey={plotType==='markers'?axis[3].key:undefined}*/}
+                            {/*                  colorDomain={dimensionDetail[axis[3].key]}*/}
+                            {/*                  getArr={([k,t])=>t[0]?t[0].data:[]}*/}
+                            {/*                  getName={([k,t])=>k}*/}
+                            {/*                  mode={plotType}/>*/}
+                            {/*}*/}
+                            {
+                                (plotType==='Ribbon')&&<RibbonChart
+                                    getArr={([k,t])=>t[0]?t[0].data:[]}
+                                    getName={([k,t])=>k}
+                                    data={pData}
+                                    xKey={axis[0].key}
+                                    yKey={axis[1].key}
+                                    zKey={axis[2].key}
+                                    cKey={axis[3].key}
+                                />
+                            }
+                        </Box>
+                    </Card>
+                </Grid>))
+            }
+        </Grid>
+    )
+}
+
+export default Viz;
