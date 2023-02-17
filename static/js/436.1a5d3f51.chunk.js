@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunkapp_perform_dashboard=self.webpackChunkapp_perform_dashboard||[]).push([[436],{1436:function(a,e,t){t.r(e);var r=t(184);e.default=function(){return(0,r.jsx)("div",{children:" Use Data-input tab to choose data and use Viz tab to view data"})}}}]);
+//# sourceMappingURL=436.1a5d3f51.chunk.js.map
