@@ -1,8 +1,9 @@
 // assets
-import { Dashboard as IconDashboard } from 'tabler-icons-react';
+import { Dashboard as IconDashboard , FileUpload as IconFileUpload,
+    ChartDots2 as IconChartDots2} from 'tabler-icons-react';
 
 // constant
-const icons = { IconDashboard };
+const icons = { IconDashboard, IconFileUpload, IconChartDots2 };
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
 
@@ -24,7 +25,7 @@ const dashboard = {
             title: 'Data Input',
             type: 'item',
             url: '/input',
-            icon: icons.IconDashboard,
+            icon: icons.IconFileUpload,
             breadcrumbs: true
         },
         {
@@ -32,7 +33,7 @@ const dashboard = {
             title: 'Viz',
             type: 'item',
             url: '/viz',
-            icon: icons.IconDashboard,
+            icon: icons.IconChartDots2,
             breadcrumbs: true
         }
     ]

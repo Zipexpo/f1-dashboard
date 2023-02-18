@@ -15,6 +15,7 @@ import Loadable from '../../components/Loadable';
 import LineChart from "../../components/viz/lineChart";
 // import LineChart from "../../components/viz/lineChart/subplots";
 import RibbonChart from "../../components/viz/Ribbon";
+import SplomChart from "../../components/viz/Splom";
 
 // fix this later
 const Viz = ()=>{
@@ -27,7 +28,8 @@ const Viz = ()=>{
     const [axis,setAxis] = useState([{label:'x',key:"index"},
         {label:'y',key:"voltage"},
         {label:'z',key:null,is3D:true},
-        {label:'color',key:null}
+        {label:'color',key:null},
+        {label:'dim',key:[],is3D:true},
     ]);
         // {key:"gpu_usage"}]);
     // need to move this in the future
@@ -65,7 +67,7 @@ const Viz = ()=>{
         axis[key].key = value;
         setAxis([...axis])
     }
-    const is3D = ((plotType==='markers')||(plotType==='lines'));
+    const largeLayout = ((plotType==='markers')||(plotType==='lines')||(plotType==='Splom'));
     const renderAxis = ()=>{
         switch (plotType){
             case 'markers':
@@ -76,13 +78,60 @@ const Viz = ()=>{
                                                      options={dimension}
                                                      onChange={(event, newValue) => onChangeAxis(i, newValue)}
                                                      renderInput={(params) => <TextField {...params} label={a.label}/>}/>)
+            case 'Splom':
+                return <Autocomplete value={axis[4].key}
+                                     multiple
+                                     size={"small"}
+                                     options={dimension}
+                                     onChange={(event, newValue) => onChangeAxis(4, newValue)}
+                                     renderInput={(params) => <TextField {...params} label={axis[4].label}/>}/>
             default:
                 return axis.map((a,i)=><Autocomplete value={a.key} key={a.label}
                                                      size={"small"}
-                                                     sx={{minWidth:200}}
+                                                     sx={{minWidth:200,display:a.label==='color' ?'none':undefined}}
                                                      options={dimension}
                                                      onChange={(event, newValue) => onChangeAxis(i, newValue)}
                                                      renderInput={(params) => <TextField {...params} label={a.label}/>}/>)
+        }
+    }
+    const renderPlots = ([profile,pData])=>{
+        switch (plotType){
+            case 'markers':
+            case 'lines':
+                return <Grid container>
+                    {pData.map(([app, appData],i) => <Grid key={`${profile} ${app}`} item xs={4}
+                                                           sx={{height: 200, mb: 3}}>
+                        <Typography variant={'h5'} textAlign={'center'}>{app}</Typography>
+                        {appData[0] &&
+                            <LineChart data={appData[0]?.data} xKey={axis[0].key} yKey={axis[1].key}
+                                       cKey={axis[3].key}
+                                       colorDomain={dimensionDetail[axis[3].key]}
+                                       getArr={([k,t])=>t[0]?t[0].data:[]}
+                                       getName={([k,t])=>k}
+                                       mode={plotType}
+                                       showscale={i===2}
+                            />}
+                    </Grid>)}
+                </Grid>
+            case 'Splom':
+                return <SplomChart
+                    getArr={([k,t])=>t[0]?t[0].data:[]}
+                    getName={([k,t])=>k}
+                    data={pData}
+                    dimensionKeys={axis[4].key}
+                />
+            case 'Ribbon':
+                return <RibbonChart
+                    getArr={([k,t])=>t[0]?t[0].data:[]}
+                    getName={([k,t])=>k}
+                    data={pData}
+                    xKey={axis[0].key}
+                    yKey={axis[1].key}
+                    zKey={axis[2].key}
+                    cKey={axis[3].key}
+                />
+            default:
+                return <>Not support yet</>
         }
     }
     return(
@@ -117,44 +166,12 @@ const Viz = ()=>{
                 </Stack>
             </Grid>
             {
-                nestData.map(([profile,pData])=>(<Grid item key={profile} xs={is3D?12:6} >
+                nestData.map(([profile,pData])=>(<Grid item key={profile} xs={largeLayout?12:6} >
                     <Card>
                         <Box sx={{ p: 2, pl: 2 }}>
                             <Typography variant={'h3'}>{profile}</Typography>
-                            {is3D&&<Grid container>
-                                {pData.map(([app, appData],i) => <Grid key={`${profile} ${app}`} item xs={4}
-                                                                     sx={{height: 200, mb: 3}}>
-                                    <Typography variant={'h5'} textAlign={'center'}>{app}</Typography>
-                                    {appData[0] &&
-                                        <LineChart data={appData[0]?.data} xKey={axis[0].key} yKey={axis[1].key}
-                                                   cKey={axis[3].key}
-                                                   colorDomain={dimensionDetail[axis[3].key]}
-                                                   getArr={([k,t])=>t[0]?t[0].data:[]}
-                                                   getName={([k,t])=>k}
-                                                   mode={plotType}
-                                                   showscale={i===2}
-                                        />}
-                                </Grid>)}
-                            </Grid>}
-                            {/*{is3D&&<LineChart data={pData}*/}
-                            {/*                  xKey={axis[0].key}*/}
-                            {/*                  yKey={axis[1].key}*/}
-                            {/*                  cKey={plotType==='markers'?axis[3].key:undefined}*/}
-                            {/*                  colorDomain={dimensionDetail[axis[3].key]}*/}
-                            {/*                  getArr={([k,t])=>t[0]?t[0].data:[]}*/}
-                            {/*                  getName={([k,t])=>k}*/}
-                            {/*                  mode={plotType}/>*/}
-                            {/*}*/}
                             {
-                                (plotType==='Ribbon')&&<RibbonChart
-                                    getArr={([k,t])=>t[0]?t[0].data:[]}
-                                    getName={([k,t])=>k}
-                                    data={pData}
-                                    xKey={axis[0].key}
-                                    yKey={axis[1].key}
-                                    zKey={axis[2].key}
-                                    cKey={axis[3].key}
-                                />
+                                renderPlots([profile,pData])
                             }
                         </Box>
                     </Card>
