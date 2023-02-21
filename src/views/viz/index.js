@@ -6,16 +6,20 @@ import {gridSpacing} from "../../store/constant";
 import {Card, Grid, Typography, Box, Autocomplete, TextField, Stack, MenuItem} from "@mui/material";
 import {lazy, useEffect, useState} from "react";
 import {groups,extent as d3extent,min as d3min, max as d3max} from "d3";
-import Loadable from '../../components/Loadable';
+
 
 
 // dashboard routing
 // const LineChart = Loadable(lazy(() => import('../../components/viz/lineChart')));
 // const RibbonChart = Loadable(lazy(() => import('../../components/viz/Ribbon')));
 import LineChart from "../../components/viz/lineChart";
+import LineCharts from "../../components/viz/lineChart/index_combine";
 // import LineChart from "../../components/viz/lineChart/subplots";
 import RibbonChart from "../../components/viz/Ribbon";
 import SplomChart from "../../components/viz/Splom";
+import PCAChart from "../../components/viz/PCA";
+import PCAChart2 from "../../components/viz/PCA/index_reverse";
+import SimChart from "../../components/viz/similarity";
 
 // fix this later
 const Viz = ()=>{
@@ -67,7 +71,7 @@ const Viz = ()=>{
         axis[key].key = value;
         setAxis([...axis])
     }
-    const largeLayout = ((plotType==='markers')||(plotType==='lines')||(plotType==='Splom'));
+    const largeLayout = ((plotType==='markers')||(plotType==='lines2')||(plotType==='lines')||(plotType==='Splom'));
     const renderAxis = ()=>{
         switch (plotType){
             case 'markers':
@@ -78,7 +82,11 @@ const Viz = ()=>{
                                                      options={dimension}
                                                      onChange={(event, newValue) => onChangeAxis(i, newValue)}
                                                      renderInput={(params) => <TextField {...params} label={a.label}/>}/>)
+
             case 'Splom':
+            case 'pca':
+            case 'pca_2':
+            case 'sim':
                 return <Autocomplete value={axis[4].key}
                                      multiple
                                      size={"small"}
@@ -113,6 +121,14 @@ const Viz = ()=>{
                             />}
                     </Grid>)}
                 </Grid>
+            case 'lines2':
+                return <LineCharts
+                    getArr={([k,t])=>t[0]?t[0].data:[]}
+                    getName={([k,t])=>k}
+                    data={pData}
+                    xKey={axis[0].key}
+                    yKey={axis[1].key}
+                />
             case 'Splom':
                 return <SplomChart
                     getArr={([k,t])=>t[0]?t[0].data:[]}
@@ -120,6 +136,31 @@ const Viz = ()=>{
                     data={pData}
                     dimensionKeys={axis[4].key}
                 />
+            case 'pca':
+                return <PCAChart
+                    getArr={([k,t])=>t[0]?t[0].data:[]}
+                    getName={([k,t])=>k}
+                    data={pData}
+                    dimensionKeys={axis[4].key}
+                />
+            case 'pca_2':
+                return <PCAChart2
+                    getArr={([k,t])=>t[0]?t[0].data:[]}
+                    getName={([k,t])=>k}
+                    data={pData}
+                    dimensionKeys={axis[4].key}
+                />
+            case 'sim':
+                return <Grid container>
+                    {axis[4].key.map((d) => <Grid key={d} item xs={6} sx={{height: 200, mb: 3}}>
+                        <Typography variant={'h5'} textAlign={'center'}>{d}</Typography>
+                        <SimChart getArr={([k,t])=>t[0]?t[0].data:[]}
+                                       getName={([k,t])=>k}
+                                       data={pData}
+                                       dimensionKey={d}
+                            />
+                    </Grid>)}
+                </Grid>
             case 'Ribbon':
                 return <RibbonChart
                     getArr={([k,t])=>t[0]?t[0].data:[]}
@@ -152,6 +193,9 @@ const Viz = ()=>{
                         <MenuItem value={'lines'}>
                             Line chart
                         </MenuItem>
+                        <MenuItem value={'lines2'}>
+                            Line chart (combine)
+                        </MenuItem>
                         <MenuItem value={'Ribbon'}>
                             3D scatter plot
                         </MenuItem>
@@ -160,6 +204,12 @@ const Viz = ()=>{
                         </MenuItem>
                         <MenuItem value={'pca'}>
                             PCA
+                        </MenuItem>
+                        <MenuItem value={'pca_2'}>
+                            PCA (revert)
+                        </MenuItem>
+                        <MenuItem value={'sim'}>
+                            Similarity matrix
                         </MenuItem>
                     </TextField>
                 {renderAxis()}
