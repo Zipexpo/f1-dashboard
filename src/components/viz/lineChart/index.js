@@ -1,56 +1,93 @@
 import Plot from 'react-plotly.js';
 
 import {useEffect, useState, useTransition} from "react";
+import {isArray} from "lodash";
 
 const initData=[];
 const domain=[undefined,undefined];
-const layout={title:{text:'',pad:0},margin:{t:10,l:50,b:20,r:30}}
-const LineChart = ({data=initData,xKey,yKey,cKey,getArr,getName,colorDomain=domain,mode='line',showscale})=>{
+const layout={title:{text:'',pad:0},margin:{t:10,l:50,b:30,r:30}}
+const LineChart = ({data=initData,xKey,domain,yKey,cKey,multiple,getName,colorDomain=domain,mode='line',showscale})=>{
     const [isPending,startTransition] = useTransition();
     const [plotdata,setPlotdata] = useState(initData);
     const [colordata,setColordata] = useState([]);
     useEffect(()=>{
         startTransition(()=>{
-            const x=[];
-            const y=[];
-            data.forEach(d=>{
-                x.push(d[xKey]);
-                y.push(d[yKey]);
-            })
-            setPlotdata({
-                x,
-                y,
-            })
+            if (!multiple) {
+                const x = [];
+                const y = [];
+                data.forEach(d => {
+                    x.push(d[xKey]);
+                    y.push(d[yKey]);
+                })
+                setPlotdata([{
+                    name: getName(data),
+                    x,
+                    y,
+                    type: 'scatter'
+                }])
+            }else {
+                const plotdata = [];
+                data.forEach(d => {
+                    getData(d,(arr)=>{
+                        debugger
+                        const x = [];
+                        const y = [];
+                        arr.forEach(d => {
+                            x.push(d[xKey]);
+                            y.push(d[yKey]);
+                        })
+                        plotdata.push({
+                            name: getName(d),
+                            x,
+                            y,
+                            fill: "tozerox",
+                            type: 'scatter',
+                            "legendgroup": getName(d)
+                        })
+                    })
+                })
+                function getData(d,calback){
+                    if (d.data)
+                        return calback(d.data);
+                    else if (d[1]&& isArray(d[1]))
+                        return d[1].forEach(d=>getData(d,calback));
+                    else
+                        return false;
+                }
+                setPlotdata(plotdata)
+            }
         })
-    },[xKey,yKey,data]);
+    },[xKey,yKey,data,multiple]);
     useEffect(()=>{
         if (mode==='markers'){
-            debugger
             if (cKey) {
-                setColordata(data.map(d=>d[cKey]));
+                setColordata([data.map(d=>d[cKey])]);
             }else {
-                setColordata([]);
+                setColordata([[]]);
             }
         }else
-            setColordata([]);
+            setColordata([[]]);
     },[data,cKey,mode])
-    const plotopt = [{
-        x:plotdata.x,
-        y:plotdata.y,
-        type: 'scatter',
-        mode
-        // marker: {color: 'red'},
-    }];
+    plotdata.forEach(p=>p.mode=mode);
     // console.log(colorDomain)
     if (colordata.length)
-        plotopt[0].marker = {color:colordata, colorscale: "Portland",colorbarTitleText: cKey,
+        plotdata.forEach((p,i)=>p.marker = {color:colordata[i], colorscale: "Portland",colorbarTitleText: cKey,
             colorbarThickness:5,
             showscale,
             cmin:colorDomain[0],cmax:colorDomain[1]
+        });
+    const _layout={...layout,
+        yaxis:{
+        title: `<b>${domain[yKey].label??yKey}</b>`,
+        autorange:false,
+            range:domain[yKey]
+        },
+        xaxis:{
+            title:`<b>${domain[xKey].label??xKey}</b>`
         }
-
+    }
     // console.log(JSON.stringify(spec.data.values))
-    return (<Plot data={plotopt} style={{width: '100%',height:'100%'}} layout={layout} useResizeHandler={true}/>)
+    return (<Plot data={plotdata} style={{width: '100%',height:'100%'}} layout={_layout} useResizeHandler={true}/>)
 }
 
 export default LineChart

@@ -37,7 +37,9 @@ const Chart = ({data=initData, getArr,getName,dimensionKey})=>{
 
                 let annotations= [];
                 const z =segmentKeys.map(d=>segmentKeys.map(d=>null));
+                z[segmentKeys.length-1][segmentKeys.length-1] = 1
                 for (let i=0;i<segmentKeys.length-1;i++){
+                    z[i][i] = 1
                     for (let j=i+1;j<segmentKeys.length;j++){
                         let xlen = p[i].length;
                         let ylen = p[j].length;

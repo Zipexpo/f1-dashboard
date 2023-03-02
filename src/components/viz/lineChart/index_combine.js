@@ -5,7 +5,7 @@ import {useEffect, useState, useTransition} from "react";
 const initData=[];
 const domain=[undefined,undefined];
 const layout={title:{text:'',pad:0},margin:{t:10,l:50,b:20,r:30}}
-const LineChart = ({data=initData,getArr,getName,xKey,yKey,cKey,colorDomain=domain,mode='line',showscale})=>{
+const LineChart = ({data=initData,getArr,getName,xKey,yKey,domain,mode='line',showscale})=>{
     const [isPending,startTransition] = useTransition();
     const [plotdata,setPlotdata] = useState(initData);
     const [colordata,setColordata] = useState([]);
@@ -55,7 +55,17 @@ const LineChart = ({data=initData,getArr,getName,xKey,yKey,cKey,colorDomain=doma
     // }
 
     // console.log(JSON.stringify(spec.data.values))
-    return (<Plot data={plotdata} style={{width: '100%',height:'100%'}} layout={layout} useResizeHandler={true}/>)
+    const _layout={...layout,
+        yaxis:{
+            title: `<b>${domain[yKey].label??yKey}</b>`,
+            autoscale: false,
+            range:domain[yKey]
+        },
+        xaxis:{
+            title:`<b>${domain[xKey].label??xKey}</b>`
+        }
+    }
+    return (<Plot data={plotdata} style={{width: '100%',height:'100%'}} layout={_layout} useResizeHandler={true}/>)
 }
 
 export default LineChart

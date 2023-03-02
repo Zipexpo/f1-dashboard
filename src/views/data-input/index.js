@@ -79,6 +79,7 @@ const DataInput = ()=>{
                     }
                 }));
             }
+            console.log(fileList.map(f=>f['File name']).join('", "'))
             try{
                 await Promise.all(q);
                 triggergetproperty(appprofileRegex)
