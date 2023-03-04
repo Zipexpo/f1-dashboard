@@ -4,8 +4,17 @@ import {useNavigate} from "react-router-dom";
 import {useDispatch} from "react-redux";
 import {useEffect, useState} from "react";
 import {csvParse} from "d3";
-const files = ["MI100-profile-LAMMPS-POWER SAVING-0", "MI100-profile-LAMMPS-VIDEO-0", "MI100-profile-LSTM-AUTO-0", "MI100-profile-LSTM-BOOTUP DEFAULT-0", "MI100-profile-LSTM-COMPUTE-0", "MI100-profile-LSTM-POWER SAVING-0", "MI100-profile-LSTM-VIDEO-0", "MI100-profile-NAMD-AUTO-0", "MI100-profile-NAMD-BOOTUP DEFAULT-0", "MI100-profile-NAMD-COMPUTE-0", "MI100-profile-NAMD-POWER SAVING-0", "MI100-profile-NAMD-VIDEO-0", "MI100-profile-ResNet50-AUTO-0", "MI100-profile-ResNet50-BOOTUP DEFAULT-0", "MI100-profile-ResNet50-COMPUTE-0", "MI100-profile-ResNet50-POWER SAVING-0", "MI100-profile-ResNet50-VIDEO-0", "MI100-profile-SPECFEM3D-AUTO-0", "MI100-profile-SPECFEM3D-BOOTUP DEFAULT-0", "MI100-profile-SPECFEM3D-COMPUTE-0", "MI100-profile-SPECFEM3D-POWER SAVING-0", "MI100-profile-SPECFEM3D-VIDEO-0", "MI100-profile-STREAM-AUTO-0", "MI100-profile-STREAM-BOOTUP DEFAULT-0", "MI100-profile-STREAM-COMPUTE-0", "MI100-profile-STREAM-POWER SAVING-0", "MI100-profile-STREAM-VIDEO-0", "MI100-profile-BERT-AUTO-0", "MI100-profile-BERT-BOOTUP DEFAULT-0", "MI100-profile-BERT-COMPUTE-0", "MI100-profile-BERT-POWER SAVING-0", "MI100-profile-BERT-VIDEO-0", "MI100-profile-DGEMM-AUTO-0", "MI100-profile-DGEMM-BOOTUP DEFAULT-0", "MI100-profile-DGEMM-COMPUTE-0", "MI100-profile-DGEMM-POWER SAVING-0", "MI100-profile-DGEMM-VIDEO-0", "MI100-profile-GROMACS-AUTO-0", "MI100-profile-GROMACS-BOOTUP DEFAULT-0", "MI100-profile-GROMACS-COMPUTE-0", "MI100-profile-GROMACS-POWER SAVING-0", "MI100-profile-GROMACS-VIDEO-0", "MI100-profile-LAMMPS-AUTO-0", "MI100-profile-LAMMPS-BOOTUP DEFAULT-0", "MI100-profile-LAMMPS-COMPUTE-0"]
-    .map(f=>({name:f,path:`${process.env.PUBLIC_URL}/data/${f}`}));
+const files = ["MI100-profile-LAMMPS-POWER SAVING-0", "MI100-profile-LAMMPS-VIDEO-0", "MI100-profile-LSTM-AUTO-0", "MI100-profile-LSTM-BOOTUP DEFAULT-0", "MI100-profile-LSTM-COMPUTE-0", "MI100-profile-LSTM-POWER SAVING-0", "MI100-profile-LSTM-VIDEO-0", "MI100-profile-NAMD-AUTO-0", "MI100-profile-NAMD-BOOTUP DEFAULT-0", "MI100-profile-NAMD-COMPUTE-0", "MI100-profile-NAMD-POWER SAVING-0", "MI100-profile-NAMD-VIDEO-0", "MI100-profile-ResNet50-AUTO-0", "MI100-profile-ResNet50-BOOTUP DEFAULT-0", "MI100-profile-ResNet50-COMPUTE-0", "MI100-profile-ResNet50-POWER SAVING-0", "MI100-profile-ResNet50-VIDEO-0", "MI100-profile-SPECFEM3D-AUTO-0", "MI100-profile-SPECFEM3D-BOOTUP DEFAULT-0", "MI100-profile-SPECFEM3D-COMPUTE-0", "MI100-profile-SPECFEM3D-POWER SAVING-0", "MI100-profile-SPECFEM3D-VIDEO-0", "MI100-profile-STREAM-AUTO-0", "MI100-profile-STREAM-BOOTUP DEFAULT-0", "MI100-profile-STREAM-COMPUTE-0", "MI100-profile-STREAM-POWER SAVING-0", "MI100-profile-STREAM-VIDEO-0", "MI100-profile-BERT-AUTO-0", "MI100-profile-BERT-BOOTUP DEFAULT-0", "MI100-profile-BERT-COMPUTE-0", "MI100-profile-BERT-POWER SAVING-0", "MI100-profile-BERT-VIDEO-0", "MI100-profile-DGEMM-AUTO-0", "MI100-profile-DGEMM-BOOTUP DEFAULT-0", "MI100-profile-DGEMM-COMPUTE-0", "MI100-profile-DGEMM-POWER SAVING-0", "MI100-profile-DGEMM-VIDEO-0", "MI100-profile-GROMACS-AUTO-0", "MI100-profile-GROMACS-BOOTUP DEFAULT-0", "MI100-profile-GROMACS-COMPUTE-0", "MI100-profile-GROMACS-POWER SAVING-0", "MI100-profile-GROMACS-VIDEO-0", "MI100-profile-LAMMPS-AUTO-0", "MI100-profile-LAMMPS-BOOTUP DEFAULT-0", "MI100-profile-LAMMPS-COMPUTE-0"];
+const filesAll = [];
+files.forEach(f=>{
+    debugger
+    const _f = f.split('-');
+    _f.pop();
+    const _fname = _f.join('-')+'-';
+    [0,1,2].forEach(r=> {
+        filesAll.push({name:_fname + r,path:`${process.env.PUBLIC_URL}/data/${_fname + r}`})
+    });
+});
 const Dashboard = ()=>{
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -14,9 +23,9 @@ const Dashboard = ()=>{
     useEffect(()=>{
         setIsLoading(true)
         let q = [];
-        for (let i=0; i<files.length;i++)
+        for (let i=0; i<filesAll.length;i++)
         {
-            let selected = files[i];
+            let selected = filesAll[i];
             fileList[i] = {
                 'File name':selected.name,
                 '# rows':0,

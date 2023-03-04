@@ -3,8 +3,19 @@ import {
     selectDatas
 } from "../../store/actions/dataProcess";
 import {gridSpacing} from "../../store/constant";
-import {Card, Grid, Typography, Box, Autocomplete, TextField, Stack, MenuItem, ToggleButton} from "@mui/material";
-import {lazy, useEffect, useState} from "react";
+import {
+    Card,
+    Grid,
+    Typography,
+    Box,
+    Autocomplete,
+    TextField,
+    Stack,
+    MenuItem,
+    ToggleButton,
+    FormControlLabel, Checkbox
+} from "@mui/material";
+import {lazy, useEffect, useRef, useState} from "react";
 import {groups,extent as d3extent,min as d3min, max as d3max} from "d3";
 
 // dashboard routing
@@ -12,7 +23,8 @@ import {groups,extent as d3extent,min as d3min, max as d3max} from "d3";
 // const RibbonChart = Loadable(lazy(() => import('../../components/viz/Ribbon')));
 import LineChart from "../../components/viz/lineChart";
 import LineCharts from "../../components/viz/lineChart/index_combine";
-// import LineChart from "../../components/viz/lineChart/subplots";
+import LineChartGap from "../../components/viz/lineChart/index_min_max";
+import LineChartAggregate from "../../components/viz/lineChart/index_aggregate";
 import RibbonChart from "../../components/viz/Ribbon";
 import SplomChart from "../../components/viz/Splom";
 import PCAChart from "../../components/viz/PCA";
@@ -40,13 +52,16 @@ const Viz = ()=>{
     const [dimension,setDimension] = useState([]);
     const [dimensionDetail,setDimensionDetail] = useState({});
     const [plotType,setPlotType] = useState('lines');
-    const [layout,setLayout] = useState([]);
     const [axis,setAxis] = useState([{label:'x',key:"index"},
         {label:'y',key:"voltage"},
         {label:'z',key:null,is3D:true},
         {label:'color',key:null},
         {label:'dim',key:[],is3D:true},
     ]);
+    const [resample,setResample] = useState('rolling');
+    const [normalize,setNormalize] = useState(false);
+    const optionContain = useRef();
+
         // {key:"gpu_usage"}]);
     // need to move this in the future
     const ROW = isSwap?'Profile':'AppName';
@@ -93,11 +108,13 @@ const Viz = ()=>{
         axis[key].key = value;
         setAxis([...axis])
     }
-    const largeLayout = ((plotType==='markers')||(plotType==='lines2')||(plotType==='violin')||(plotType==='lines')||(plotType==='Splom'));
+    const largeLayout = ((plotType==='markers')||(plotType==='lines2')||(plotType==='violin')||(plotType==='errorbar')
+        ||(plotType==='errorbar2')||(plotType==='aggregate')||(plotType==='lines')||(plotType==='Splom'));
     const renderAxis = ()=>{
         switch (plotType){
             case 'markers':
             case 'errorbar':
+            case 'errorbar2':
             case 'lines':
                 return axis.map((a,i)=><Autocomplete value={a.key} key={a.label}
                                                      getOptionLabel={d=>d}
@@ -106,6 +123,42 @@ const Viz = ()=>{
                                                      options={dimension}
                                                      onChange={(event, newValue) => onChangeAxis(i, newValue)}
                                                      renderInput={(params) => <TextField {...params} label={a.label}/>}/>)
+            case 'aggregate':
+                return <>{[axis[0], axis[1]].map((a, i) => <Autocomplete value={a.key} key={a.label}
+                                                                         getOptionLabel={d => d}
+                                                                         size={"small"}
+                                                                         sx={{
+                                                                             minWidth: 200,
+                                                                             display: a.is3D ? 'none' : undefined
+                                                                         }}
+                                                                         options={dimension}
+                                                                         onChange={(event, newValue) => onChangeAxis(i, newValue)}
+                                                                         renderInput={(params) => <TextField {...params}
+                                                                                                             label={a.label}/>}/>)}
+                    <TextField
+                        select
+                        label="Aggregate"
+                        value={resample}
+                        key={'Aggregate'}
+                        size={"small"}
+                        onChange={(event)=>setResample(event.target.value)}
+                    >
+                        <MenuItem value={'rolling'}>
+                            Moving window
+                        </MenuItem>
+                        <MenuItem value={'resample'}>
+                            Resampling
+                        </MenuItem>
+                    </TextField>
+                    <FormControlLabel
+                        key={'Aggregate_Normalize'}
+                        value={normalize}
+                        onChange={(event)=>setNormalize(event.target.checked)}
+                        control={<Checkbox />}
+                        label={`Normalize ${axis[0].key}`}
+                        labelPlacement="end"
+                    />
+                </>
             case 'violin':
             case 'boxplot':
             case 'Splom':
@@ -153,16 +206,33 @@ const Viz = ()=>{
                 </Grid>
             case 'errorbar':
                 return <Grid container>
-                    <LineChart data={pData}
+                    <LineChartGap data={pData}
                                xKey={axis[0].key}
                                yKey={axis[1].key}
                                domain={dimensionDetail}
-                               cKey={axis[3].key}
-                               colorDomain={dimensionDetail[axis[3].key]}
-                               multiple={true}
                                getName={([k,t])=>k}
-                               mode={'lines'}
-                               showscale={true}
+                    />
+                </Grid>
+            case 'errorbar2':
+                return <Grid container>
+                    <LineChartGap data={pData}
+                               xKey={axis[0].key}
+                               yKey={axis[1].key}
+                               domain={dimensionDetail}
+                               getName={([k,t])=>k}
+                              combile={true}
+                    />
+                </Grid>
+            case 'aggregate':
+                return <Grid container>
+                    <LineChartAggregate data={pData}
+                                  xKey={axis[0].key}
+                                  yKey={axis[1].key}
+                                  domain={dimensionDetail}
+                                  getName={([k,t])=>k}
+                                  combile={true}
+                                resample={resample}
+                                normalize={normalize}
                     />
                 </Grid>
             case 'lines2':
@@ -243,7 +313,7 @@ const Viz = ()=>{
     return(
         <Grid container spacing={gridSpacing}>
             <Grid item xs={12} >
-                <Stack spacing={2} direction={"row"}>
+                <Stack spacing={2} direction={"row"} ref={optionContain}>
                     <TextField
                         select
                         label="Plot type"
@@ -260,6 +330,12 @@ const Viz = ()=>{
                         </MenuItem>
                         <MenuItem value={'errorbar'}>
                             Line chart with bound
+                        </MenuItem>
+                        <MenuItem value={'errorbar2'}>
+                            Line chart with bound 2
+                        </MenuItem>
+                        <MenuItem value={'aggregate'}>
+                            Line chart with aggregate
                         </MenuItem>
                         <MenuItem value={'lines2'}>
                             Line chart (combine)
@@ -296,7 +372,7 @@ const Viz = ()=>{
                 nestData.map(([profile,pData])=>(<Grid item key={profile} xs={largeLayout?12:6} >
                     <Card>
                         <Box sx={{ p: 2, pl: 2 }}>
-                            <Typography variant={'h3'}>{profile}</Typography>
+                            <Typography variant={'h4'} sx={{textAlign:'center'}}>{profile}</Typography>
                             {
                                 renderPlots([profile,pData])
                             }

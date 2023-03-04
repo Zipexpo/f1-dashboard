@@ -78,12 +78,12 @@ const LineChart = ({data=initData,xKey,domain,yKey,cKey,multiple,getName,colorDo
         });
     const _layout={...layout,
         yaxis:{
-        title: `<b>${domain[yKey].label??yKey}</b>`,
+        title: domain[yKey]?`<b>${domain[yKey].label??yKey}</b>`:'',
         autorange:false,
             range:domain[yKey]
         },
         xaxis:{
-            title:`<b>${domain[xKey].label??xKey}</b>`
+            title:domain[yKey]?`<b>${domain[xKey].label??xKey}</b>`:''
         }
     }
     // console.log(JSON.stringify(spec.data.values))

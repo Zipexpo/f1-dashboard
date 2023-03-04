@@ -1,6 +1,6 @@
 import Plot from "react-plotly.js";
 import {useEffect, useState, useTransition} from "react";
-import {min as d3min, max as d3max} from 'd3';
+import {min as d3min, max as d3max, scaleLinear} from 'd3';
 
 
 const initData=[];
@@ -16,15 +16,23 @@ const ViolinChart = ({data=initData,getArr,getName,dimensionKeys,domain,mode='vi
             dimensionKeys.forEach((k)=> {
                 y[k] = [];
             });
-            setDomainR([d3min(dimensionKeys,k=>domain[k][0])-3,d3max(dimensionKeys,k=>domain[k][1])+3]);
+            setDomainR([d3min(dimensionKeys,k=>domain[k][0]),d3max(dimensionKeys,k=>domain[k][1])]);
             data.map(t=> {
                 const tr = getName(t);
-                getArr(t).forEach(d=>{
-                    x.push(tr);
-                    dimensionKeys.forEach((k,i)=>{
-                        y[k].push(d[k])
+                t[1].forEach(t=>{
+                    t.data.forEach(d=>{
+                        x.push(tr);
+                        dimensionKeys.forEach((k,i)=>{
+                            y[k].push(d[k])
+                        })
                     })
                 })
+                // getArr(t).forEach(d=>{
+                //     x.push(tr);
+                //     dimensionKeys.forEach((k,i)=>{
+                //         y[k].push(d[k])
+                //     })
+                // })
             });
             const traceData = dimensionKeys.map(k=>{
                 return ({
@@ -51,11 +59,11 @@ const ViolinChart = ({data=initData,getArr,getName,dimensionKeys,domain,mode='vi
     },[data,dimensionKeys,mode]);
     const _layout={...layout,
         yaxis:{
-            autorange:false,
-            range:domainR,
+            autoscale:false,
+            range:scaleLinear().domain(domainR).nice(),
         },
     }
-
+    console.log(domainR,scaleLinear().domain(domainR).nice().domain())
     return (<Plot className={`violin_${mode}`} data={plotdata} style={{width: '100%',height:'100%'}} layout={_layout} useResizeHandler={true}/>)
 }
 export default ViolinChart

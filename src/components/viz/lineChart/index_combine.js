@@ -1,10 +1,11 @@
 import Plot from 'react-plotly.js';
 
 import {useEffect, useState, useTransition} from "react";
+import {scaleLinear} from "d3";
 
 const initData=[];
 const domain=[undefined,undefined];
-const layout={title:{text:'',pad:0},margin:{t:10,l:50,b:20,r:30}}
+const layout={title:{text:'',pad:0},margin:{t:10,l:50,b:30,r:30}}
 const LineChart = ({data=initData,getArr,getName,xKey,yKey,domain,mode='line',showscale})=>{
     const [isPending,startTransition] = useTransition();
     const [plotdata,setPlotdata] = useState(initData);
@@ -23,6 +24,7 @@ const LineChart = ({data=initData,getArr,getName,xKey,yKey,domain,mode='line',sh
                     x,
                     y,
                     type: 'scatter',
+                    // line: {width: 1}
                 }
             })
             setPlotdata(traceData)
@@ -57,12 +59,12 @@ const LineChart = ({data=initData,getArr,getName,xKey,yKey,domain,mode='line',sh
     // console.log(JSON.stringify(spec.data.values))
     const _layout={...layout,
         yaxis:{
-            title: `<b>${domain[yKey].label??yKey}</b>`,
+            title: domain[yKey]?`<b>${domain[yKey].label??yKey}</b>`:'',
             autoscale: false,
-            range:domain[yKey]
+            range: scaleLinear().domain([domain[yKey][0],domain[yKey][1]*1.01]).nice().domain()
         },
         xaxis:{
-            title:`<b>${domain[xKey].label??xKey}</b>`
+            title:domain[yKey]?`<b>${domain[xKey].label??xKey}</b>`:''
         }
     }
     return (<Plot data={plotdata} style={{width: '100%',height:'100%'}} layout={_layout} useResizeHandler={true}/>)
